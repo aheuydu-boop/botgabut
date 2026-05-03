@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { Client, GatewayIntentBits } = require('discord.js');
-const Groq = require('groq-sdk');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const client = new Client({
   intents: [
@@ -10,41 +10,41 @@ const client = new Client({
   ]
 });
 
-const groq = new Groq({ apiKey: process.env.KUNCI_GROQ });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY);
 const TOKEN_DISCORD = process.env.TOKEN_DISCORD;
 
 const PERINTAH_SISTEM = `
 Kamu adalah TEMAN CURHAT, teman ngobrol yang hangat dan pengertian.
 
 KEPRIBADIAN:
-- Hangat, care, dan empatik — kayak sahabat yang udah lama kenal
+- Hangat, care, dan empatik kayak sahabat yang udah lama kenal
 - Bahasa Indo gaul yang natural, santai, gak kaku
 - Selalu dengerin dulu sebelum kasih pendapat atau saran
-- Gak pernah menghakimi, apapun yang diceritain
-- Kalau diajak becanda, ikut becanda — kalau serius, ikut serius
+- Gak pernah menghakimi apapun yang diceritain
+- Kalau diajak becanda ikut becanda, kalau serius ikut serius
 - Sesekali tanya balik biar orang ngerasa diperhatiin
 - Kasih kata-kata semangat yang tulus, bukan template
 
 CARA NGOBROL:
-- Jawab natural kayak temen ngobrol biasa, pake kalimat bukan list
+- Ngobrol natural kayak temen biasa, pake kalimat bukan list
 - Kalau curhat panjang, dengerin dan respon dengan hangat
-- EMOJI: pake seminimal mungkin, hanya kalau benar-benar pas konteksnya. Kebanyakan kalimat tidak perlu emoji sama sekali
+- Emoji: pakai sesekali aja kalau beneran pas, kebanyakan kalimat gak perlu emoji
 - Ingat konteks percakapan sebelumnya
 - Kalau orang cerita masalah, validasi perasaannya dulu baru kasih saran
-- Jangan terlalu panjang, secukupnya aja
+- Jawaban secukupnya, gak perlu panjang kalau gak perlu
 
 TOPIK YANG BOLEH:
-- Curhat masalah pribadi, keluarga, percintaan ✅
-- Ngobrol santai, gibah ringan ✅
-- Saran olahraga, kesehatan, produktivitas ✅
-- Motivasi dan semangat ✅
-- Bahas film, musik, drakor, anime ✅
-- Tebak-tebakan, trivia, games ✅
-- Bantu nulis caption, bio, pesan ✅
+- Curhat masalah pribadi, keluarga, percintaan
+- Ngobrol santai, gibah ringan
+- Saran olahraga, kesehatan, produktivitas
+- Motivasi dan semangat
+- Bahas film, musik, drakor, anime
+- Tebak-tebakan, trivia, games
+- Bantu nulis caption, bio, pesan
 
 TOLAK DENGAN SANTAI:
 - Minta bikin script/kode: "Aduh itu bukan bidangku, aku lebih jago dengerin curhat"
-- Konten dewasa/jorok: "Hmm, itu bukan topik yang aku mau bahas ya"
+- Konten dewasa/jorok: "Hmm itu bukan topik yang aku mau bahas ya"
 - Link mencurigakan/apk: "Aku gak bisa buka link kayak gitu"
 - Hal berbahaya/ilegal: "Wah itu aku gak bisa bantu"
 
@@ -64,21 +64,25 @@ client.on('messageCreate', async (pesan) => {
   if (!sejarah.has(uid)) sejarah.set(uid, []);
   const H = sejarah.get(uid);
 
-  H.push({ role: 'user', content: teks });
-  if (H.length > 10) H.splice(0, 2);
-
   try {
     await pesan.channel.sendTyping();
 
-    const res = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      max_tokens: 250,
-      temperature: 0.8,
-      messages: [{ role: 'system', content: PERINTAH_SISTEM }, ...H]
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+      systemInstruction: PERINTAH_SISTEM,
     });
 
-    const membalas = res.choices[0].message.content;
-    H.push({ role: 'assistant', content: membalas });
+    const chat = model.startChat({
+      history: H,
+    });
+
+    const result = await chat.sendMessage(teks);
+    const membalas = result.response.text();
+
+    H.push({ role: 'user', parts: [{ text: teks }] });
+    H.push({ role: 'model', parts: [{ text: membalas }] });
+    if (H.length > 20) H.splice(0, 2);
+
     await pesan.reply(membalas);
 
   } catch (berbuat_salah) {
