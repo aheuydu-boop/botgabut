@@ -2,9 +2,9 @@
   "name": "temancurhat",
   "version": "1.0.0",
   "description": "",
-  "main": "indeks.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node indeks.js"
+    "start": "node index.js"
   },
   "license": "ISC",
   "dependencies": {
