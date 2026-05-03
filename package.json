@@ -1,20 +1,15 @@
 {
-  "nama": "temancurhat",
-  "versi": "1.0.0",
-  "keterangan": "",
-  "utama": "indeks.js",
-  "naskah": {
-    "tes": "gema\"Kesalahan: tidak ada pengujian yang ditentukan\""
+  "name": "temancurhat",
+  "version": "1.0.0",
+  "description": "",
+  "main": "indeks.js",
+  "scripts": {
+    "start": "node indeks.js"
   },
-  "kata kunci": [],
-  "pengarang": "",
-  "lisensi": "ISC",
-  "jenis": "commonjs",
-  "ketergantungan": {
-    "@anthropic-ai/sdk": "^0.92.0",
+  "license": "ISC",
+  "dependencies": {
     "@google/generative-ai": "^0.21.0",
     "discord.js": "^14.26.4",
-    "dotenv": "^17.4.2",
-    "groq-sdk": "^1.1.2"
+    "dotenv": "^17.4.2"
   }
 }
